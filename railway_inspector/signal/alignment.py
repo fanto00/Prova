@@ -86,10 +86,10 @@ def xcorr_lag(ref: np.ndarray, sig: np.ndarray, max_lag: int) -> int:
     # We just need to slice to ±max_lag around the centre.
 
     # MATLAB xcorr(ref, sig) computes Rxy(m) = sum_n ref(n+m)*sig(n).
-    # scipy.signal.correlate(a, b)[k] = sum_n a[n+k-(N-1)] * b[n]
-    # so correlate(ref, sig) gives lag = -(MATLAB lag).
-    # Swapping to correlate(sig, ref) recovers the MATLAB sign convention.
-    full = scipy.signal.correlate(sig, ref, mode='full')
+    # scipy.signal.correlate(ref, sig)[k] = sum_n ref[n+k-(N-1)] * sig[n]
+    # which matches MATLAB's definition exactly (positive lag = ref leads sig).
+    # correlate(sig, ref) would give Rxy(-m) — the WRONG sign — do not use.
+    full = scipy.signal.correlate(ref, sig, mode='full')
     # Centre index of the full correlogram (lag = 0)
     centre = len(ref) - 1
     # Extract the window [centre - max_lag : centre + max_lag + 1]

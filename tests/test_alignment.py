@@ -6,9 +6,11 @@ from railway_inspector.signal.alignment import (
 
 def test_xcorr_lag_detects_known_shift():
     ref = np.zeros(100); ref[50] = 1.0
-    sig = np.zeros(100); sig[55] = 1.0   # sig delayed by 5
+    sig = np.zeros(100); sig[55] = 1.0   # sig peak is AHEAD of ref peak
     lag = xcorr_lag(ref, sig, max_lag=20)
-    assert lag == 5  # ref leads sig by 5 samples (MATLAB convention)
+    # MATLAB convention: lag = p_ref - p_sig = 50 - 55 = -5
+    # (negative because sig peak is at a higher index than ref peak)
+    assert lag == -5
 
 
 def test_shift_signal_frac_integer_lag_matches_roll():
