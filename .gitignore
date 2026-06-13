@@ -1,0 +1,25 @@
+# Graphify generated output / caches
+graphify-out/
+graphify-out-pdfs/
+
+# Literature PDFs (large binaries)
+literature/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# MATLAB / data
+*.mat
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
