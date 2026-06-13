@@ -71,6 +71,28 @@ def assign_cluster_ids(pos_sorted: np.ndarray, cross_tol: float) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
+# _matlab_round  –  round-half-away-from-zero (MATLAB's round behavior)
+# ---------------------------------------------------------------------------
+
+def _matlab_round(x: np.ndarray | float) -> np.ndarray | float:
+    """Round using MATLAB's round-half-away-from-zero rule.
+
+    MATLAB's round(x) rounds 0.5 away from zero:
+    - round(2.5) = 3
+    - round(-2.5) = -3
+
+    NumPy's np.round uses banker's rounding (round-half-to-even):
+    - np.round(2.5) = 2
+    - np.round(-2.5) = -2
+
+    This function replicates MATLAB's behavior using:
+    sign(x) * floor(abs(x) + 0.5)
+    """
+    x = np.asarray(x, dtype=float)
+    return np.sign(x) * np.floor(np.abs(x) + 0.5)
+
+
+# ---------------------------------------------------------------------------
 # _matlab_mode  –  mode(round(x)) with MATLAB tie-break
 # ---------------------------------------------------------------------------
 
@@ -148,12 +170,8 @@ def filter_by_mode_speed(
     mode_speed: float = np.nan
 
     if len(valid_speeds) > 0:
-        # mode(round(valid_speeds)) – MATLAB rounds half-away-from-zero;
-        # np.round uses banker's rounding, but for the integer-valued
-        # speed data typical in this domain the difference is negligible.
-        # np.round is used here; if exact MATLAB half-away is ever needed,
-        # replace with: np.floor(valid_speeds + 0.5)
-        rounded = np.round(valid_speeds)
+        # mode(round(valid_speeds)) – use MATLAB's round-half-away-from-zero
+        rounded = _matlab_round(valid_speeds)
         mode_speed = _matlab_mode(rounded)
 
         if not only_joints:

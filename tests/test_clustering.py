@@ -139,3 +139,13 @@ def test_mode_speed_keep_mask_includes_boundary():
     keep, mode_speed = filter_by_mode_speed(speeds, speed_tol=10, only_joints=False)
     assert mode_speed == 80.0
     assert list(keep) == [True, True]
+
+
+def test_mode_speed_matlab_rounding_half_away_from_zero():
+    """MATLAB round-half-away-from-zero: 80.5 rounds to 81, not 80 (banker's rounding)."""
+    # 80.5 rounds AWAY from zero → 81 (MATLAB)
+    # Under np.round (banker's rounding), 80.5 → 80 (would fail this test)
+    speeds = np.array([80.5, 80.5, 81.0])
+    keep, mode_speed = filter_by_mode_speed(speeds, speed_tol=10, only_joints=False)
+    # Rounded: [81, 81, 81]; mode = 81
+    assert mode_speed == 81.0
