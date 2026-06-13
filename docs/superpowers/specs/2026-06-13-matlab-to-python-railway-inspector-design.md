@@ -138,6 +138,19 @@ Terzo obiettivo del progetto: imparare a orchestrare subagenti Claude Code.
 - **Subagente Traduttore:** un agente per modulo; traduce MATLAB → Python preservando la matematica esatta.
 - **Subagente Revisore matematico:** verifica analitica riga-per-riga; guardiano del vincolo invariante. Approva o richiede correzioni.
 
+### Modelli (account senza Max — priorità al contenimento dei costi)
+
+| Ruolo | Modello | Motivo |
+|---|---|---|
+| Orchestratore | modello della sessione corrente | già attivo |
+| Revisore matematico | Sonnet 4.6 | adeguato alla revisione analitica riga-per-riga con prompt rigoroso |
+| Traduttore moduli `signal/` | Sonnet 4.6 | cuore matematico; Sonnet con prompt stringente |
+| Traduttore GUI / widget / dialoghi | Haiku 4.5 | lavoro meccanico (layout PyQt6, callback); veloce ed economico |
+
+Nessun uso di Opus. Compensazioni per il modello più leggero:
+1. Prompt dei subagenti molto stringenti: blocco MATLAB esatto da tradurre + checklist di equivalenza.
+2. Moduli `signal/` tradotti in serie, uno alla volta, con doppia passata del revisore.
+
 ### Flusso
 
 1. L'orchestratore dispaccia un Traduttore per il modulo corrente.
