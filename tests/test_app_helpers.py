@@ -45,3 +45,34 @@ def test_safe_ratio_zero_denominator_returns_999():
 def test_safe_ratio_normal_division():
     from railway_inspector.app.utils.helpers import safe_ratio
     assert safe_ratio(6.0, 3.0) == 2.0
+
+
+def _run(filt):
+    return {"Data": {"Filt": filt}}
+
+
+def test_get_sign_mean_empty_history_returns_one():
+    from railway_inspector.app.utils.helpers import get_sign_mean
+    assert get_sign_mean({"History": []}, "a", "b") == 1
+
+
+def test_get_sign_mean_no_filt_returns_one():
+    from railway_inspector.app.utils.helpers import get_sign_mean
+    defect = {"History": [{"Data": {}}]}
+    assert get_sign_mean(defect, "a", "b") == 1
+
+
+def test_get_sign_mean_positive_center():
+    from railway_inspector.app.utils.helpers import get_sign_mean
+    # N=11 -> mid0 = (11+1)//2 - 1 = 5 ; half = min(5, 11//4=2) = 2
+    # slice sig[3:8] = all +2.0 -> mean +2 -> sign +1
+    sig = np.full(11, 2.0)
+    defect = {"History": [_run({"a": sig})]}
+    assert get_sign_mean(defect, "a", "b") == 1.0
+
+
+def test_get_sign_mean_negative_center():
+    from railway_inspector.app.utils.helpers import get_sign_mean
+    sig = np.full(11, -2.0)
+    defect = {"History": [_run({"a": sig})]}
+    assert get_sign_mean(defect, "a", "b") == -1.0

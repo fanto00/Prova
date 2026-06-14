@@ -37,3 +37,28 @@ def safe_ratio(a: float, b: float) -> float:
             return 1.0
         return 999
     return a / b
+
+
+def get_sign_mean(Defect: dict, sens1: str, sens2: str) -> float:
+    """Sign of the mean center value, averaged over runs and the two sensors.
+
+    Port of app.m:7383. Empty result falls back to +1.
+    """
+    vals: list[float] = []
+    for run in Defect.get("History", []):
+        data = run.get("Data", {})
+        if "Filt" not in data:
+            continue
+        F = data["Filt"]
+        for sn in (sens1, sens2):
+            if sn in F:
+                sig = np.asarray(F[sn], dtype=float).reshape(-1)
+                if sig.size > 0:
+                    N = sig.size
+                    mid0 = (N + 1) // 2 - 1          # MATLAB round(N/2), 1-based -> 0-based
+                    half = min(5, N // 4)            # floor(length/4)
+                    seg = sig[mid0 - half: mid0 + half + 1]
+                    vals.append(float(np.mean(seg)))
+    if not vals:
+        return 1
+    return float(np.sign(np.mean(vals)))
