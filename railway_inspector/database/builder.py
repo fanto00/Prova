@@ -33,6 +33,11 @@ from typing import Any
 import numpy as np
 
 from railway_inspector.io.mat_loader import load_section, parse_run_date
+
+
+def _matlab_round(x: float) -> int:
+    """Round half-away-from-zero, matching MATLAB's round() for non-negative x."""
+    return int(np.floor(x + 0.5))
 from railway_inspector.signal.alignment import (
     xcorr_lag,
     shift_signal_frac,
@@ -121,7 +126,7 @@ def _micro_align_and_crop(
     # --- Final crop (lines 512-538) ---
     n_half = int(round(win_final / cfg.SPATIAL_RES))
     rel_axis = np.asarray(curr_signals["RelativeAxis"], dtype=float)
-    center_idx = int(round(len(rel_axis) / 2))   # MATLAB: round(length/2)
+    center_idx = _matlab_round(len(rel_axis) / 2) - 1   # MATLAB 1-based round(N/2) -> 0-based
 
     crop_start_ideal = center_idx - n_half
     crop_end_ideal = center_idx + n_half
@@ -466,7 +471,7 @@ def _second_pass_complete(
                 # Final crop (lines 720-744)
                 n_half = int(round(win_final / cfg.SPATIAL_RES))
                 rel_ax = np.asarray(ext_signals.get("RelativeAxis", []), dtype=float)
-                center_idx = int(round(len(rel_ax) / 2))
+                center_idx = _matlab_round(len(rel_ax) / 2) - 1   # MATLAB 1-based round(N/2) -> 0-based
                 safe_start = max(0, center_idx - n_half)
                 safe_end = min(len(rel_ax) - 1, center_idx + n_half)
 
