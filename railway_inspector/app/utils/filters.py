@@ -44,6 +44,9 @@ def filter_defect_by_dates(Defect: dict, d1, d2) -> dict:
     if "Num_Total_Runs" in Dsub:
         Dsub["Num_Total_Runs"] = len(Hs)
     if "Num_Occurrences" in Dsub:
+        # MATLAB struct arrays are homogeneous, so isfield(Hs,'Detected') is true
+        # iff every run has the field. `all(...)` mirrors that and is also the safe
+        # choice (it guarantees the sum below never KeyErrors on a missing key).
         if all("Detected" in run for run in Hs):
             Dsub["Num_Occurrences"] = sum(bool(run["Detected"]) for run in Hs)
         else:
