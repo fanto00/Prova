@@ -40,3 +40,56 @@ def peak_lambda_from_spectrum(spectrum, freq_vec, total_weight: float, cfg) -> f
     if f_dom > 0:
         return 1 / f_dom
     return 0
+
+
+def _matlab_round_pos(x: float) -> int:
+    """Round half-away-from-zero for non-negative x (MATLAB round)."""
+    return int(np.floor(x + 0.5))
+
+
+def get_spectrum_psd(F: dict, sensor_list, weights, cfg):
+    """Amplitude-weighted mean one-sided PSD over a sensor list (app.m:7191).
+
+    Returns (psd_mean, freq_vec) as np.ndarray, or (None, None) when no sensor
+    contributed. Fixed 10 m analysis window -> NFFT = round(10 / SPATIAL_RES).
+    """
+    win_m = 10.0
+    dx_global = cfg.SPATIAL_RES
+    fs_global = 1.0 / dx_global
+    nfft = _matlab_round_pos(win_m / dx_global)
+    if nfft < 4:
+        nfft = 4
+
+    psd_sum = None
+    freq_vec = None
+    total_weight = 0.0
+
+    for sn, w in zip(sensor_list, weights):
+        if w < 1e-6 or sn not in F:
+            continue
+        sig = np.asarray(F[sn], dtype=float).reshape(-1)
+        if sig.size == 0 or sig.size < 4:
+            continue
+
+        n_campioni = sig.size
+        if n_campioni > nfft:
+            start0 = (n_campioni - nfft) // 2     # floor((N-NFFT)/2), 1-based -> 0-based
+            sig = sig[start0:start0 + nfft]
+
+        win = hamming(sig.size, sym=True)
+        f, pxx = periodogram(sig, fs=fs_global, window=win, nfft=nfft,
+                             detrend=False, return_onesided=True, scaling="density")
+
+        if freq_vec is None:
+            freq_vec = f
+            psd_sum = np.zeros_like(pxx)
+
+        if f.shape[0] != freq_vec.shape[0]:
+            pxx = interp1_zero(f, pxx, freq_vec)
+
+        psd_sum = psd_sum + pxx * w
+        total_weight += w
+
+    if psd_sum is None or total_weight < 1e-6:
+        return None, None
+    return psd_sum / total_weight, freq_vec
