@@ -7,6 +7,7 @@ from __future__ import annotations
 import numpy as np
 
 from railway_inspector.detection.trigger import movmean
+from railway_inspector.signal.alignment import shift_signal_frac
 
 
 def get_amp(F: dict, sensor_name: str) -> float:
@@ -105,3 +106,12 @@ def sort_runs_by_direction(History: list) -> tuple[np.ndarray, np.ndarray]:
             elif rms_l > rms_r:
                 idx_bwd[i] = True
     return idx_fwd, idx_bwd
+
+
+def helper_fft_shift(sig, shift_m: float, spatial_res: float):
+    """Fractional FFT phase shift. Exact alias of signal.alignment.shift_signal_frac
+    (the DB-creator function the MATLAB source delegates to). See app.m:1846."""
+    sig = np.asarray(sig, dtype=float).reshape(-1)
+    if sig.size <= 1:
+        return sig
+    return shift_signal_frac(sig, shift_m, spatial_res)

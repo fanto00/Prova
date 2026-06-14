@@ -122,3 +122,19 @@ def test_sort_runs_rms_tie_leaves_both_false():
     fwd, bwd = sort_runs_by_direction(history)
     assert list(fwd) == [False]
     assert list(bwd) == [False]
+
+
+def test_helper_fft_shift_short_signal_returned_unchanged():
+    from railway_inspector.app.utils.helpers import helper_fft_shift
+    sig = np.array([5.0])
+    out = helper_fft_shift(sig, 0.1, 0.004)
+    assert np.array_equal(out, sig)
+
+
+def test_helper_fft_shift_matches_shift_signal_frac():
+    from railway_inspector.app.utils.helpers import helper_fft_shift
+    from railway_inspector.signal.alignment import shift_signal_frac
+    sig = np.sin(np.linspace(0, 4 * np.pi, 64))
+    out = helper_fft_shift(sig, 0.012, 0.004)
+    expected = shift_signal_frac(sig, 0.012, 0.004)
+    np.testing.assert_allclose(out, expected, atol=1e-12)
