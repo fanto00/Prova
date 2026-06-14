@@ -28,3 +28,12 @@ def get_max_rms(F: dict, sensor_name: str, win_samples: int) -> float:
                 return float(np.max(rms_sig))
             return float(np.max(np.abs(sig)))
     return 0.0
+
+
+def safe_ratio(a: float, b: float) -> float:
+    """a/b with MATLAB guards: 1.0 if both ~0, 999 if only denom ~0 (app.m:7357)."""
+    if b < 1e-6:
+        if a < 1e-6:
+            return 1.0
+        return 999
+    return a / b

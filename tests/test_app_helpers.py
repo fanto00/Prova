@@ -30,3 +30,18 @@ def test_get_max_rms_uses_movmean_rms():
     sig = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     expected = float(np.max(np.sqrt(movmean(sig**2, 3))))
     assert get_max_rms({"s1": sig}, "s1", 3) == pytest.approx(expected)
+
+
+def test_safe_ratio_both_small_returns_one():
+    from railway_inspector.app.utils.helpers import safe_ratio
+    assert safe_ratio(0.0, 0.0) == 1.0
+
+
+def test_safe_ratio_zero_denominator_returns_999():
+    from railway_inspector.app.utils.helpers import safe_ratio
+    assert safe_ratio(5.0, 0.0) == 999
+
+
+def test_safe_ratio_normal_division():
+    from railway_inspector.app.utils.helpers import safe_ratio
+    assert safe_ratio(6.0, 3.0) == 2.0
