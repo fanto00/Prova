@@ -62,3 +62,46 @@ def get_sign_mean(Defect: dict, sens1: str, sens2: str) -> float:
     if not vals:
         return 1
     return float(np.sign(np.mean(vals)))
+
+
+def _rms_finite(F: dict, field: str) -> float:
+    """Population RMS over finite samples, 0 if missing/empty (app.m fallback)."""
+    if field in F:
+        s = np.asarray(F[field], dtype=float).reshape(-1)
+        s = s[np.isfinite(s)]
+        if s.size > 0:
+            return float(np.sqrt(np.mean(s**2)))
+    return 0.0
+
+
+def sort_runs_by_direction(History: list) -> tuple[np.ndarray, np.ndarray]:
+    """Split runs into forward/backward boolean masks (app.m:6524).
+
+    Uses the run/Data ``orientation`` string if present, else falls back to
+    comparing front lateral RMS (right>left -> forward). Ties stay False.
+    """
+    n_runs = len(History)
+    idx_fwd = np.zeros(n_runs, dtype=bool)
+    idx_bwd = np.zeros(n_runs, dtype=bool)
+    for i, run_i in enumerate(History):
+        d = run_i.get("Data", {})
+        if "Filt" not in d:
+            continue
+        Fd = d["Filt"]
+        ori = ""
+        if run_i.get("orientation"):
+            ori = str(run_i["orientation"]).strip().lower()
+        elif d.get("orientation"):
+            ori = str(d["orientation"]).strip().lower()
+        if "forward" in ori:
+            idx_fwd[i] = True
+        elif "backward" in ori:
+            idx_bwd[i] = True
+        else:
+            rms_r = _rms_finite(Fd, "right_sensor_front_lat")
+            rms_l = _rms_finite(Fd, "left_sensor_front_lat")
+            if rms_r > rms_l:
+                idx_fwd[i] = True
+            elif rms_l > rms_r:
+                idx_bwd[i] = True
+    return idx_fwd, idx_bwd

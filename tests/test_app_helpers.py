@@ -76,3 +76,49 @@ def test_get_sign_mean_negative_center():
     sig = np.full(11, -2.0)
     defect = {"History": [_run({"a": sig})]}
     assert get_sign_mean(defect, "a", "b") == -1.0
+
+
+def test_sort_runs_orientation_forward_backward():
+    from railway_inspector.app.utils.helpers import sort_runs_by_direction
+    history = [
+        {"orientation": "Forward", "Data": {"Filt": {}}},
+        {"orientation": "backward run", "Data": {"Filt": {}}},
+    ]
+    fwd, bwd = sort_runs_by_direction(history)
+    assert list(fwd) == [True, False]
+    assert list(bwd) == [False, True]
+
+
+def test_sort_runs_no_filt_is_skipped():
+    from railway_inspector.app.utils.helpers import sort_runs_by_direction
+    history = [{"orientation": "forward", "Data": {}}]
+    fwd, bwd = sort_runs_by_direction(history)
+    assert list(fwd) == [False]
+    assert list(bwd) == [False]
+
+
+def test_sort_runs_rms_fallback():
+    from railway_inspector.app.utils.helpers import sort_runs_by_direction
+    # right lateral RMS > left lateral RMS -> forward
+    history = [{
+        "Data": {"Filt": {
+            "right_sensor_front_lat": np.array([3.0, 3.0, 3.0]),
+            "left_sensor_front_lat": np.array([1.0, 1.0, 1.0]),
+        }},
+    }]
+    fwd, bwd = sort_runs_by_direction(history)
+    assert list(fwd) == [True]
+    assert list(bwd) == [False]
+
+
+def test_sort_runs_rms_tie_leaves_both_false():
+    from railway_inspector.app.utils.helpers import sort_runs_by_direction
+    history = [{
+        "Data": {"Filt": {
+            "right_sensor_front_lat": np.array([2.0, 2.0]),
+            "left_sensor_front_lat": np.array([2.0, 2.0]),
+        }},
+    }]
+    fwd, bwd = sort_runs_by_direction(history)
+    assert list(fwd) == [False]
+    assert list(bwd) == [False]
