@@ -111,7 +111,9 @@ def sort_runs_by_direction(History: list) -> tuple[np.ndarray, np.ndarray]:
 def helper_fft_shift(sig, shift_m: float, spatial_res: float):
     """Fractional FFT phase shift. Exact alias of signal.alignment.shift_signal_frac
     (the DB-creator function the MATLAB source delegates to). See app.m:1846."""
-    sig = np.asarray(sig, dtype=float).reshape(-1)
+    sig = np.asarray(sig, dtype=float)
     if sig.size <= 1:
         return sig
+    # Delegate to shift_signal_frac, which preserves the original 1-D/row shape
+    # (replicating the MATLAB ``if isrow(sig)`` restoration at app.m:1863).
     return shift_signal_frac(sig, shift_m, spatial_res)
