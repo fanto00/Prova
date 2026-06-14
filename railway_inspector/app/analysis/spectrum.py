@@ -5,6 +5,7 @@ import numpy as np
 from scipy.signal import periodogram
 from scipy.signal.windows import hamming
 
+from railway_inspector.config import CFG
 from railway_inspector.signal.resampling import interp1_zero
 
 
@@ -21,7 +22,12 @@ def lambda_to_label(lambda_: float, L_giunto: float, L_irreg: float, L_deform: f
     return "molto lungo"
 
 
-def peak_lambda_from_spectrum(spectrum, freq_vec, total_weight: float, cfg) -> float:
+def peak_lambda_from_spectrum(
+    spectrum: np.ndarray | None,
+    freq_vec: np.ndarray | None,
+    total_weight: float,
+    cfg: CFG,
+) -> float:
     """Dominant wavelength from the summed spectrum peak in the band of interest
     [1/L_MAX, 1/L_MIN_QUIET] (app.m:7335). Returns 0 when undefined."""
     if spectrum is None or len(spectrum) == 0 or total_weight < 1e-6:
@@ -47,7 +53,12 @@ def _matlab_round_pos(x: float) -> int:
     return int(np.floor(x + 0.5))
 
 
-def get_spectrum_psd(F: dict, sensor_list, weights, cfg):
+def get_spectrum_psd(
+    F: dict,
+    sensor_list: list[str],
+    weights,
+    cfg: CFG,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
     """Amplitude-weighted mean one-sided PSD over a sensor list (app.m:7191).
 
     Returns (psd_mean, freq_vec) as np.ndarray, or (None, None) when no sensor

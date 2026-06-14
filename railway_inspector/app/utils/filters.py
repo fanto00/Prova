@@ -4,14 +4,14 @@ from __future__ import annotations
 import datetime as dt
 
 
-def _as_day(x):
+def _as_day(x: dt.date) -> dt.date:
     """dateshift(x, 'start', 'day') -> the date part."""
     if isinstance(x, dt.datetime):
         return x.date()
     return x  # already a date
 
 
-def filter_defect_by_dates(Defect: dict, d1, d2) -> dict:
+def filter_defect_by_dates(Defect: dict, d1: dt.date | None, d2: dt.date | None) -> dict:
     """Filter a defect's History to [d1, d2] (inclusive, day resolution) and
     recompute aggregates. Returns a shallow copy; input is not mutated."""
     Dsub = dict(Defect)
@@ -54,7 +54,7 @@ def filter_defect_by_dates(Defect: dict, d1, d2) -> dict:
     return Dsub
 
 
-def filter_db_by_dates(DB: list, d1, d2) -> list:
+def filter_db_by_dates(DB: list, d1: dt.date | None, d2: dt.date | None) -> list:
     """Apply filter_defect_by_dates to every defect, dropping those whose
     filtered History is empty (app.m:639). Input list is not mutated."""
     if d1 is None or not DB:

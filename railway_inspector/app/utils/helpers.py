@@ -108,7 +108,7 @@ def sort_runs_by_direction(History: list) -> tuple[np.ndarray, np.ndarray]:
     return idx_fwd, idx_bwd
 
 
-def helper_fft_shift(sig, shift_m: float, spatial_res: float):
+def helper_fft_shift(sig, shift_m: float, spatial_res: float) -> np.ndarray:
     """Fractional FFT phase shift. Exact alias of signal.alignment.shift_signal_frac
     (the DB-creator function the MATLAB source delegates to). See app.m:1846."""
     sig = np.asarray(sig, dtype=float)
