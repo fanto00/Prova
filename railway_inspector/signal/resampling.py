@@ -127,3 +127,40 @@ def interp1_zero(
     xq = np.asarray(xq, dtype=float)
 
     return np.interp(xq, x, y, left=0.0, right=0.0)
+
+
+def interp1_nan(
+    x: np.ndarray,
+    y: np.ndarray,
+    xq: np.ndarray,
+) -> np.ndarray:
+    """Piecewise-linear interpolation with NaN fill outside the data range.
+
+    Replicates MATLAB ``interp1(x, y, xq, 'linear', NaN)``: query points
+    strictly outside ``[x[0], x[-1]]`` are assigned NaN rather than 0 or an
+    extrapolated value. Sibling of :func:`interp1_zero`.
+
+    Parameters
+    ----------
+    x : array_like, shape (N,)
+        Strictly monotonically increasing sample positions.
+    y : array_like, shape (N,)
+        Sample values at positions *x*.
+    xq : array_like, shape (M,)
+        Query positions.
+
+    Returns
+    -------
+    yq : ndarray, shape (M,)
+        Interpolated values with NaN outside the data range.
+
+    References
+    ----------
+    MATLAB documentation: interp1
+    https://www.mathworks.com/help/matlab/ref/interp1.html
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    xq = np.asarray(xq, dtype=float)
+
+    return np.interp(xq, x, y, left=np.nan, right=np.nan)

@@ -56,6 +56,28 @@ class CFG:
     MIN_RUNS_COMPLETE: int = 10          # min triggered runs to activate completion
     MAX_TOTAL_RUNS: int = 150            # absolute max runs per defect
 
+    # --- IPI scoring (app.m:39, 54-80) ---
+    WINDOW_SIZE: float = 5.0            # m, same as database
+    IPI_MIN_RUNS: int = 5
+    IPI_RECENT_DAYS: int = 30
+    IPI_MIN_HISTORY_DAYS: int = 45
+    IPI_MIN_DAYS: int = 10
+    IPI_TREND_MAX: int = 100
+    IPI_TREND_SENS: int = 80
+    IPI_LAT_BONUS: int = 30
+    IPI_LAT_THRESH: float = 0.7
+    IPI_PCA_BONUS: int = 20
+    IPI_PCA_SENS: int = 50
+    IPI_PCA_EXCUR_BONUS: int = 5
+    IPI_PCA_EXCUR_DAYS: int = 7
+    IPI_PCA_K: int = 2
+    IPI_PCA_MIN_RUNS: int = 30
+    IPI_CREST_BONUS: int = 10
+    IPI_IA_BONUS: int = 20
+    IPI_SEV_PENALTY_MAX: int = 20
+    IPI_SEV_THR_LOW: int = 15
+    IPI_SEV_THR_HIGH: int = 50
+
 
 def default_config() -> CFG:
     """Return a CFG instance populated with the MATLAB defaults."""
