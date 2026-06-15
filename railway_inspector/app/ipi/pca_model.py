@@ -9,6 +9,7 @@ import datetime as dt
 
 import numpy as np
 
+from railway_inspector.config import CFG
 from railway_inspector.detection.trigger import movmean
 from railway_inspector.signal.resampling import interp1_nan
 from railway_inspector.app.utils.helpers import sort_runs_by_direction
@@ -33,7 +34,7 @@ def _group_mean(group_id: np.ndarray, values: np.ndarray, n_groups: int) -> np.n
     return sums / counts_safe
 
 
-def _matlab_pca(X: np.ndarray):
+def _matlab_pca(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Replicate MATLAB pca(X, 'Economy', true) -> (coeffs, scores).
 
     Centers columns, SVD, coeffs = right singular vectors, scores = Xc @ coeffs,
@@ -52,8 +53,9 @@ def _matlab_pca(X: np.ndarray):
     return coeffs, scores
 
 
-def build_pca_model_standalone(History, run_idx, direction, spatial_res,
-                               window_size, win_m, MIN_RUNS, k_pca):
+def build_pca_model_standalone(History: list, run_idx, direction: str,
+                               spatial_res: float, window_size: float, win_m: float,
+                               MIN_RUNS: int, k_pca: int) -> dict | None:
     """Channel-space PCA model over per-channel RMS envelopes (app.m:6650).
 
     Returns a dict with keys coeffs, scores, dates, rmse, n_valid, or None on
@@ -161,7 +163,7 @@ def build_pca_model_standalone(History, run_idx, direction, spatial_res,
     }
 
 
-def compute_pca_bonus_for_defect(Defect, C):
+def compute_pca_bonus_for_defect(Defect: dict, C: CFG) -> tuple[float, dict]:
     """PCA RMSE-trend + excursion bonus for the IPI score (app.m:6760).
 
     Returns (bonus_pca, info) where info is the MATLAB-equivalent struct dict.
