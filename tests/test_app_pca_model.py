@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from railway_inspector.app.ipi.pca_model import _matlab_pca, _group_mean, _datenum, build_pca_model_standalone
+from railway_inspector.app.ipi.pca_model import _matlab_pca, _group_mean, _datenum, build_pca_model_standalone, compute_pca_bonus_for_defect
+from railway_inspector.config import default_config
 import datetime as dt
 
 
@@ -95,3 +96,43 @@ def test_build_pca_skips_run_with_mismatched_axis():
     out = build_pca_model_standalone(hist, list(range(4)), "forward", 0.004, 5.0, 0.5, 3, 2)
     assert out is not None
     assert out["n_valid"] == 3  # the corrupted run was excluded
+
+
+def _forward_run(date, scale, seed):
+    # forward orientation: right front lateral RMS must exceed left front lateral.
+    r = _make_run(date, scale=scale, seed=seed)
+    n = r["Data"]["RelativeAxis"].size
+    rng = np.random.default_rng(seed + 999)
+    r["Data"]["Filt"]["right_sensor_front_lat"] = 3.0 * scale * rng.standard_normal(n)
+    r["Data"]["Filt"]["left_sensor_front_lat"] = 0.1 * scale * rng.standard_normal(n)
+    return r
+
+
+def test_compute_pca_bonus_too_few_runs_returns_zero():
+    cfg = default_config()
+    defect = {"History": [_make_run(dt.datetime(2026, 1, 1)) for _ in range(3)]}
+    bonus, info = compute_pca_bonus_for_defect(defect, cfg)
+    assert bonus == 0
+    assert info["direction_used"] == "none"
+    assert info["k_pca"] == cfg.IPI_PCA_K
+    assert info["bonus_trend"] == 0
+    assert info["bonus_excursion"] == 0
+
+
+def test_compute_pca_bonus_full_scenario_trend_positive():
+    cfg = default_config()
+    base = dt.datetime(2026, 1, 1)
+    runs = []
+    # 40 forward runs over 60 days; envelope amplitude grows in the recent window
+    # so recent RMSE > base RMSE -> positive trend bonus.
+    for i in range(40):
+        day = int(i * 60 / 39)               # spread across 0..60 days (>45 span, >=10 days)
+        scale = 1.0 if day <= 30 else 3.0    # amplify after cutoff day
+        runs.append(_forward_run(base + dt.timedelta(days=day), scale=scale, seed=i))
+    defect = {"History": runs}
+    bonus, info = compute_pca_bonus_for_defect(defect, cfg)
+    assert info["direction_used"] == "forward"
+    assert bonus >= 0
+    assert 0 <= info["bonus_trend"] <= cfg.IPI_PCA_BONUS
+    assert 0 <= info["bonus_excursion"] <= cfg.IPI_PCA_EXCUR_BONUS
+    assert info["bonus_trend"] + info["bonus_excursion"] == pytest.approx(bonus)

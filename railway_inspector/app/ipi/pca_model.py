@@ -158,3 +158,86 @@ def build_pca_model_standalone(History, run_idx, direction, spatial_res,
         "rmse": rmse_run[ord_],
         "n_valid": n_valid,
     }
+
+
+def compute_pca_bonus_for_defect(Defect, C):
+    """PCA RMSE-trend + excursion bonus for the IPI score (app.m:6760).
+
+    Returns (bonus_pca, info) where info is the MATLAB-equivalent struct dict.
+    """
+    bonus_pca = 0
+    info = {
+        "direction_used": "none", "k_pca": C.IPI_PCA_K,
+        "rmse_base": np.nan, "rmse_recent": np.nan, "pca_inc_perc": 0,
+        "n_excursions": 0, "bonus_trend": 0, "bonus_excursion": 0,
+    }
+    History = Defect["History"]
+    if len(History) < C.IPI_PCA_MIN_RUNS:
+        return bonus_pca, info
+
+    idx_fwd, idx_bwd = sort_runs_by_direction(History)
+    n_fwd, n_bwd = int(idx_fwd.sum()), int(idx_bwd.sum())
+
+    M = None
+    if n_fwd >= n_bwd and n_fwd >= C.IPI_PCA_MIN_RUNS:
+        M = build_pca_model_standalone(
+            History, np.flatnonzero(idx_fwd), "forward",
+            C.SPATIAL_RES, C.WINDOW_SIZE, 0.5, C.IPI_PCA_MIN_RUNS, C.IPI_PCA_K)
+        info["direction_used"] = "forward"
+    if M is None and n_bwd >= C.IPI_PCA_MIN_RUNS:
+        M = build_pca_model_standalone(
+            History, np.flatnonzero(idx_bwd), "backward",
+            C.SPATIAL_RES, C.WINDOW_SIZE, 0.5, C.IPI_PCA_MIN_RUNS, C.IPI_PCA_K)
+        info["direction_used"] = "backward"
+    if M is None:
+        return bonus_pca, info
+
+    rmse_k = M["rmse"]
+    days_v = np.floor(M["dates"])
+    days_un = np.unique(days_v)
+    n_days = len(days_un)
+    history_span = days_un[-1] - days_un[0]
+    if history_span < C.IPI_MIN_HISTORY_DAYS:
+        return bonus_pca, info
+    if n_days < C.IPI_MIN_DAYS:
+        return bonus_pca, info
+
+    rmse_daily = np.zeros(n_days)
+    for dd in range(n_days):
+        rmse_daily[dd] = np.nanmean(rmse_k[days_v == days_un[dd]])
+
+    cutoff_day = days_un[-1] - C.IPI_RECENT_DAYS
+    mask_recent = days_un > cutoff_day
+    mask_base = days_un <= cutoff_day
+    if not np.any(mask_recent) or not np.any(mask_base):
+        return bonus_pca, info
+
+    rmse_base = np.nanmean(rmse_daily[mask_base])
+    rmse_recent = np.nanmean(rmse_daily[mask_recent])
+
+    bonus_trend = 0
+    pca_inc = 0
+    if rmse_base > 1e-9:
+        pca_inc = ((rmse_recent - rmse_base) / rmse_base) * 100
+        bonus_trend = min(C.IPI_PCA_BONUS, max(0, pca_inc * (C.IPI_PCA_BONUS / C.IPI_PCA_SENS)))
+
+    base_runs = days_v <= cutoff_day
+    mu_b = np.nanmean(rmse_k[base_runs])
+    sg_b = np.nanstd(rmse_k[base_runs], ddof=1)
+    thr = mu_b + 2 * sg_b
+    last_d = np.max(M["dates"])
+    rec_mask = M["dates"] >= last_d - C.IPI_PCA_EXCUR_DAYS
+    n_excur = int(np.sum(rmse_k[rec_mask] > thr))
+
+    bonus_excur = 0
+    if n_excur > 0:
+        bonus_excur = min(C.IPI_PCA_EXCUR_BONUS, n_excur * (C.IPI_PCA_EXCUR_BONUS / 3))
+
+    bonus_pca = bonus_trend + bonus_excur
+    info["rmse_base"] = rmse_base
+    info["rmse_recent"] = rmse_recent
+    info["pca_inc_perc"] = pca_inc
+    info["n_excursions"] = n_excur
+    info["bonus_trend"] = bonus_trend
+    info["bonus_excursion"] = bonus_excur
+    return bonus_pca, info
