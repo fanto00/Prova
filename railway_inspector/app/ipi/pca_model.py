@@ -131,6 +131,7 @@ def build_pca_model_standalone(History, run_idx, direction, spatial_res,
             Xpar[base:base + N_GRID, c] = Xraw[r, c * N_GRID:(c + 1) * N_GRID]
 
     mu_ch = np.mean(Xpar, axis=0)
+    # MATLAB std(Xpar, 0, 1): weight flag 0 (default) normalizes by N-1 -> ddof=1.
     sg_ch = np.std(Xpar, axis=0, ddof=1)
     sg_ch[sg_ch < 1e-9] = 1
     Xpar_z = (Xpar - mu_ch) / sg_ch
@@ -223,6 +224,7 @@ def compute_pca_bonus_for_defect(Defect, C):
 
     base_runs = days_v <= cutoff_day
     mu_b = np.nanmean(rmse_k[base_runs])
+    # MATLAB std(..., 'omitnan'): default weight 0 normalizes by N-1 -> ddof=1.
     sg_b = np.nanstd(rmse_k[base_runs], ddof=1)
     thr = mu_b + 2 * sg_b
     last_d = np.max(M["dates"])
