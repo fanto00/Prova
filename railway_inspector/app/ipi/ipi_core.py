@@ -28,3 +28,15 @@ def compute_severity_ratio_lv(all_amps: np.ndarray) -> tuple[np.ndarray, np.ndar
     severity = a_vert_max  # Severity(i) == A_VERT_MAX (app.m:2140)
     ratio_lv = a_lat_max / np.maximum(a_vert_max, 1e-6)
     return severity, ratio_lv
+
+
+def ipi_semaphore_color(ipi_final: float) -> tuple[float, float, float]:
+    """Risk-band RGB for an IPI score (app.m:5447-5450). Grey 'insufficient
+    data' state is handled by the widget, not here."""
+    if ipi_final >= 75:
+        return (0.8, 0.0, 0.0)
+    if ipi_final >= 50:
+        return (1.0, 0.5, 0.0)
+    if ipi_final >= 25:
+        return (0.9, 0.8, 0.0)
+    return (0.0, 0.6, 0.0)

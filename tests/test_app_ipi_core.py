@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from railway_inspector.app.ipi.ipi_core import compute_severity_ratio_lv
+from railway_inspector.app.ipi.ipi_core import compute_severity_ratio_lv, ipi_semaphore_color
 
 
 def test_severity_is_max_of_vertical_columns():
@@ -27,3 +27,17 @@ def test_multiple_runs_shapes():
     sev, ratio = compute_severity_ratio_lv(amps)
     assert sev.shape == (5,)
     assert ratio.shape == (5,)
+
+
+@pytest.mark.parametrize("score,rgb", [
+    (90, (0.8, 0.0, 0.0)),
+    (75, (0.8, 0.0, 0.0)),
+    (60, (1.0, 0.5, 0.0)),
+    (50, (1.0, 0.5, 0.0)),
+    (30, (0.9, 0.8, 0.0)),
+    (25, (0.9, 0.8, 0.0)),
+    (10, (0.0, 0.6, 0.0)),
+    (0, (0.0, 0.6, 0.0)),
+])
+def test_ipi_semaphore_color_bands(score, rgb):
+    assert ipi_semaphore_color(score) == rgb
