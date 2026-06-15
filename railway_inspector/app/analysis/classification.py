@@ -9,6 +9,7 @@ from collections import Counter
 
 import numpy as np
 
+from railway_inspector.config import CFG
 from railway_inspector.app.utils.helpers import get_amp
 from railway_inspector.app.analysis.spectrum import (
     get_spectrum_psd,
@@ -36,7 +37,7 @@ def _mode_categorical(cells: list[str]) -> str:
     return min(winners)
 
 
-def classify_defects(DB: list, cfg) -> list[dict]:
+def classify_defects(DB: list, cfg: CFG) -> list[dict]:
     """Per-defect 3x3 classification + dominant wavelength (app.m:6221-6347).
 
     Returns one record dict per defect in DB (same order). The dashboard
