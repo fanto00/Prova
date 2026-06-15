@@ -24,3 +24,6 @@ Thumbs.db
 .idea/
 .vscode/
 config.yaml
+
+# Claude local session settings (contains local API keys / permissions)
+.claude/settings.local.json
