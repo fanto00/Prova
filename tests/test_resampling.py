@@ -1,5 +1,5 @@
 import numpy as np
-from railway_inspector.signal.resampling import interpft, interp1_zero
+from railway_inspector.signal.resampling import interpft, interp1_zero, interp1_nan
 
 
 def test_interpft_upsamples_sine_without_distortion():
@@ -28,3 +28,14 @@ def test_interp1_zero_outside_range_is_zero():
     y = np.array([5.0, 10.0, 20.0])
     xq = np.array([-1.0, 3.0])
     np.testing.assert_allclose(interp1_zero(x, y, xq), [0.0, 0.0])
+
+
+def test_interp1_nan_fills_outside_with_nan():
+    x = np.array([0.0, 1.0, 2.0])
+    y = np.array([10.0, 20.0, 30.0])
+    xq = np.array([-0.5, 0.5, 1.5, 2.5])
+    out = interp1_nan(x, y, xq)
+    assert np.isnan(out[0])
+    assert out[1] == 15.0
+    assert out[2] == 25.0
+    assert np.isnan(out[3])
